@@ -1,13 +1,18 @@
+
 import React, { useState, useCallback, useRef } from 'react';
 import { generateInfographicData } from './services/geminiService';
 import { InfographicData, InputMode, Benefit, IconName } from './types';
 import InfographicDisplay from './components/InfographicDisplay';
 import Loader from './components/Loader';
 import Icon from './components/Icon';
+import ApiKeyInput from './components/ApiKeyInput';
 
 const iconOptions: IconName[] = ['estrela', 'foguete', 'coracao', 'lampada', 'grafico', 'escudo'];
 
 const App: React.FC = () => {
+  // Estado para a chave da API, inicializado a partir do localStorage
+  const [apiKey, setApiKey] = useState<string | null>(() => localStorage.getItem('gemini-api-key'));
+
   const [inputMode, setInputMode] = useState<InputMode>(InputMode.AI);
   const [topic, setTopic] = useState<string>('');
   const [manualTitle, setManualTitle] = useState<string>('');
@@ -19,6 +24,12 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleApiKeySubmit = (newApiKey: string) => {
+    localStorage.setItem('gemini-api-key', newApiKey);
+    setApiKey(newApiKey);
+    setError(null);
+  };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -40,6 +51,10 @@ const App: React.FC = () => {
   };
 
   const handleGenerateFromAI = useCallback(async () => {
+    if (!apiKey) {
+      setError("Por favor, insira sua chave da API do Gemini para continuar.");
+      return;
+    }
     setIsLoading(true);
     setError(null);
     setInfographicData(null);
@@ -62,14 +77,20 @@ const App: React.FC = () => {
         }
       }
 
-      const data = await generateInfographicData(topic, imagePayload);
+      // Passa a chave da API para a função de serviço
+      const data = await generateInfographicData(apiKey, topic, imagePayload);
       setInfographicData({ ...data, imageUrl: image ?? undefined });
     } catch (err: any) {
       setError(err.message || 'Ocorreu um erro desconhecido.');
+      // Se o erro for de autenticação, limpa a chave inválida
+      if (err.message.includes('inválida')) {
+          localStorage.removeItem('gemini-api-key');
+          setApiKey(null);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [topic, image]);
+  }, [topic, image, apiKey]);
 
   const handleAddBenefit = () => {
     if (manualBenefits.length < 6) {
@@ -124,8 +145,9 @@ const App: React.FC = () => {
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
+  
   const renderImageUpload = () => {
+    // ... (código inalterado)
     const labelText = inputMode === InputMode.AI
       ? "Imagem de Referência (Opcional)"
       : "Imagem de Cabeçalho (Opcional)";
@@ -153,7 +175,7 @@ const App: React.FC = () => {
                 htmlFor="image-upload"
                 className="cursor-pointer w-full flex justify-center items-center px-6 py-3 border-2 border-dashed border-gray-600 text-base font-medium rounded-lg text-brand-text-secondary hover:border-brand-primary hover:text-brand-primary transition"
               >
-                <svg xmlns="http://www.w.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 Adicionar Imagem (Máx 5MB)
               </label>
             </>
@@ -179,34 +201,54 @@ const App: React.FC = () => {
     );
   }
 
-  const renderAiPanel = () => (
-    <div className="w-full">
-      <div className="space-y-4">
-        <label htmlFor="topic-input" className="block text-lg font-medium text-brand-text-primary">
-          Tópico do Produto ou Serviço <span className="text-sm text-brand-text-secondary">(Opcional)</span>
-        </label>
-        <input
-          id="topic-input"
-          type="text"
-          value={topic}
-          onChange={(e) => setTopic(e.target.value)}
-          placeholder="Deixe em branco para um tópico surpresa ou insira o seu"
-          className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-brand-text-primary focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition"
-        />
-        <button
-          onClick={handleGenerateFromAI}
-          disabled={isLoading}
-          className="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:bg-indigo-400 disabled:cursor-not-allowed shadow-lg hover:shadow-indigo-500/50"
-        >
-          <Icon name="estrela" className="w-5 h-5 mr-2" />
-          Gerar Infográfico com IA
-        </button>
+  const renderAiPanel = () => {
+    // Se não houver chave de API, renderiza o formulário de inserção
+    if (!apiKey) {
+      return <ApiKeyInput onApiKeySubmit={handleApiKeySubmit} />;
+    }
+
+    // Se houver chave, renderiza o painel de geração
+    return (
+      <div className="w-full">
+        <div className="space-y-4">
+          <label htmlFor="topic-input" className="block text-lg font-medium text-brand-text-primary">
+            Tópico do Produto ou Serviço <span className="text-sm text-brand-text-secondary">(Opcional)</span>
+          </label>
+          <input
+            id="topic-input"
+            type="text"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="Deixe em branco para um tópico surpresa ou insira o seu"
+            className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-brand-text-primary focus:ring-2 focus:ring-brand-primary focus:border-brand-primary transition"
+          />
+          <button
+            onClick={handleGenerateFromAI}
+            disabled={isLoading}
+            className="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:bg-indigo-400 disabled:cursor-not-allowed shadow-lg hover:shadow-indigo-500/50"
+          >
+            <Icon name="estrela" className="w-5 h-5 mr-2" />
+            Gerar Infográfico com IA
+          </button>
+        </div>
+        {renderImageUpload()}
+        <div className="text-center mt-4">
+            <button 
+                onClick={() => {
+                    localStorage.removeItem('gemini-api-key');
+                    setApiKey(null);
+                }}
+                className="text-sm text-gray-500 hover:text-gray-400 transition"
+            >
+                Alterar Chave de API
+            </button>
+        </div>
       </div>
-      {renderImageUpload()}
-    </div>
-  );
+    );
+  };
 
   const renderManualPanel = () => (
+    // ... (código inalterado)
     <div className="w-full">
         <div className="space-y-6">
             <div>

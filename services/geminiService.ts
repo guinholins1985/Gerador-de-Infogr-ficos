@@ -2,8 +2,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { InfographicData } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
+// O esquema permanece o mesmo
 const infographicSchema = {
     type: Type.OBJECT,
     properties: {
@@ -37,10 +36,15 @@ const infographicSchema = {
     required: ["title", "benefits"]
 };
 
+// A função agora aceita a chave da API como primeiro argumento
 export const generateInfographicData = async (
-    topic?: string, 
+    apiKey: string,
+    topic?: string,
     image?: { data: string; mimeType: string }
 ): Promise<InfographicData> => {
+    // Instancia o cliente da IA aqui, usando a chave fornecida
+    const ai = new GoogleGenAI({ apiKey });
+
     try {
         let prompt: string;
         let contents: any;
@@ -81,8 +85,12 @@ export const generateInfographicData = async (
         }
 
         return parsedData as InfographicData;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Erro ao gerar dados do infográfico:", error);
-        throw new Error("Não foi possível gerar o conteúdo. Por favor, tente novamente.");
+        // Tratamento de erro específico para chave de API inválida
+        if (error.message.includes('API key not valid')) {
+            throw new Error("Sua chave da API do Gemini é inválida ou expirou. Por favor, verifique-a e tente novamente.");
+        }
+        throw new Error("Não foi possível gerar o conteúdo. Verifique sua chave de API e tente novamente.");
     }
 };
