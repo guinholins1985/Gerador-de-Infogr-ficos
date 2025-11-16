@@ -37,15 +37,36 @@ const infographicSchema = {
     required: ["title", "benefits"]
 };
 
-export const generateInfographicData = async (topic?: string): Promise<InfographicData> => {
+export const generateInfographicData = async (
+    topic?: string, 
+    image?: { data: string; mimeType: string }
+): Promise<InfographicData> => {
     try {
-        const prompt = topic?.trim()
-            ? `Você é um especialista em marketing e design. A partir do tópico de um produto ou serviço "${topic}", crie um título atraente para um infográfico e uma lista de 5 benefícios principais. Para cada benefício, forneça um título curto e uma descrição concisa (máximo de 20 palavras). Além disso, sugira um ícone relevante para cada benefício a partir da seguinte lista: 'estrela', 'foguete', 'coracao', 'lampada', 'grafico', 'escudo'. Responda exclusivamente no formato JSON especificado.`
-            : `Você é um especialista em marketing e design. Crie um infográfico sobre um tópico interessante e popular (por exemplo: "Os Benefícios da Leitura Diária", "Vantagens de Beber Água", "Como a Meditação Melhora a Vida"). Crie um título atraente para o infográfico e uma lista de 5 benefícios principais. Para cada benefício, forneça um título curto e uma descrição concisa (máximo de 20 palavras). Além disso, sugira um ícone relevante para cada benefício a partir da seguinte lista: 'estrela', 'foguete', 'coracao', 'lampada', 'grafico', 'escudo'. Responda exclusivamente no formato JSON especificado.`;
+        let prompt: string;
+        let contents: any;
+
+        if (image) {
+            prompt = topic?.trim()
+                ? `Você é um especialista em marketing e design. A partir do tópico "${topic}" e da imagem do produto fornecida, crie um título atraente para um infográfico e uma lista de 5 benefícios principais. Descreva benefícios que são visualmente evidentes na imagem ou fortemente implícitos por ela. Para cada benefício, forneça um título curto, uma descrição concisa (máximo de 20 palavras) e um ícone relevante da lista: 'estrela', 'foguete', 'coracao', 'lampada', 'grafico', 'escudo'. Responda exclusivamente no formato JSON especificado.`
+                : `Você é um especialista em marketing e design. Analise a imagem do produto fornecida, crie um título atraente para um infográfico e uma lista de 5 de seus benefícios principais. Para cada benefício, forneça um título curto, uma descrição concisa (máximo de 20 palavras) e um ícone relevante da lista: 'estrela', 'foguete', 'coracao', 'lampada', 'grafico', 'escudo'. Responda exclusivamente no formato JSON especificado.`;
+            
+            contents = {
+                parts: [
+                    { text: prompt },
+                    { inlineData: { mimeType: image.mimeType, data: image.data } }
+                ]
+            };
+        } else {
+            prompt = topic?.trim()
+                ? `Você é um especialista em marketing e design. A partir do tópico de um produto ou serviço "${topic}", crie um título atraente para um infográfico e uma lista de 5 benefícios principais. Para cada benefício, forneça um título curto e uma descrição concisa (máximo de 20 palavras). Além disso, sugira um ícone relevante para cada benefício a partir da seguinte lista: 'estrela', 'foguete', 'coracao', 'lampada', 'grafico', 'escudo'. Responda exclusivamente no formato JSON especificado.`
+                : `Você é um especialista em marketing e design. Crie um infográfico sobre um tópico interessante e popular (por exemplo: "Os Benefícios da Leitura Diária", "Vantagens de Beber Água", "Como a Meditação Melhora a Vida"). Crie um título atraente para o infográfico e uma lista de 5 benefícios principais. Para cada benefício, forneça um título curto e uma descrição concisa (máximo de 20 palavras). Além disso, sugira um ícone relevante para cada benefício a partir da seguinte lista: 'estrela', 'foguete', 'coracao', 'lampada', 'grafico', 'escudo'. Responda exclusivamente no formato JSON especificado.`;
+            
+            contents = prompt;
+        }
         
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: prompt,
+            contents: contents,
             config: {
                 responseMimeType: "application/json",
                 responseSchema: infographicSchema,

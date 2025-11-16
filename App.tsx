@@ -45,7 +45,25 @@ const App: React.FC = () => {
     setError(null);
     setInfographicData(null);
     try {
-      const data = await generateInfographicData(topic);
+      let imagePayload: { data: string; mimeType: string; } | undefined = undefined;
+      
+      if (image) {
+        const parts = image.split(',');
+        const mimeTypePart = parts[0].match(/:(.*?);/);
+        if (parts.length === 2 && mimeTypePart) {
+          imagePayload = {
+            mimeType: mimeTypePart[1],
+            data: parts[1]
+          };
+        } else {
+            console.error("Formato de URL de dados inválido para a imagem.");
+            setError("Ocorreu um erro ao processar a imagem.");
+            setIsLoading(false);
+            return;
+        }
+      }
+
+      const data = await generateInfographicData(topic, imagePayload);
       setInfographicData({ ...data, imageUrl: image });
     } catch (err: any) {
       setError(err.message || 'Ocorreu um erro desconhecido.');
@@ -107,49 +125,59 @@ const App: React.FC = () => {
     }
   };
 
-  const renderImageUpload = () => (
-    <div className="mt-6 border-t border-gray-700 pt-6">
-        <label className="block text-lg font-medium text-brand-text-primary mb-2">
-          Imagem de Cabeçalho (Opcional)
-        </label>
-        {!image && (
-          <>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageChange}
-              accept="image/png, image/jpeg, image/webp"
-              className="hidden"
-              id="image-upload"
-            />
-            <label
-              htmlFor="image-upload"
-              className="cursor-pointer w-full flex justify-center items-center px-6 py-3 border-2 border-dashed border-gray-600 text-base font-medium rounded-lg text-brand-text-secondary hover:border-brand-primary hover:text-brand-primary transition"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-              Adicionar Imagem (Máx 5MB)
-            </label>
-          </>
-        )}
-        {image && (
-          <div className="relative group">
-            <img src={image} alt="Pré-visualização" className="w-full max-h-48 object-contain rounded-lg bg-gray-900/50 p-2" />
-            <button
-              onClick={() => {
-                setImage(null)
-                if(fileInputRef.current) {
-                  fileInputRef.current.value = "";
-                }
-              }}
-              className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label="Remover imagem"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-          </div>
-        )}
-    </div>
-  );
+  const renderImageUpload = () => {
+    const labelText = inputMode === InputMode.AI
+      ? "Imagem de Referência (Opcional)"
+      : "Imagem de Cabeçalho (Opcional)";
+    const description = inputMode === InputMode.AI
+      ? "A IA usará a imagem para gerar o conteúdo."
+      : "A imagem aparecerá no topo do infográfico.";
+
+    return (
+      <div className="mt-6 border-t border-gray-700 pt-6">
+          <label className="block text-lg font-medium text-brand-text-primary mb-1">
+            {labelText}
+          </label>
+          <p className="text-sm text-brand-text-secondary mb-3">{description}</p>
+          {!image && (
+            <>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                accept="image/png, image/jpeg, image/webp"
+                className="hidden"
+                id="image-upload"
+              />
+              <label
+                htmlFor="image-upload"
+                className="cursor-pointer w-full flex justify-center items-center px-6 py-3 border-2 border-dashed border-gray-600 text-base font-medium rounded-lg text-brand-text-secondary hover:border-brand-primary hover:text-brand-primary transition"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                Adicionar Imagem (Máx 5MB)
+              </label>
+            </>
+          )}
+          {image && (
+            <div className="relative group">
+              <img src={image} alt="Pré-visualização" className="w-full max-h-48 object-contain rounded-lg bg-gray-900/50 p-2" />
+              <button
+                onClick={() => {
+                  setImage(null)
+                  if(fileInputRef.current) {
+                    fileInputRef.current.value = "";
+                  }
+                }}
+                className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Remover imagem"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          )}
+      </div>
+    );
+  }
 
   const renderAiPanel = () => (
     <div className="w-full">
