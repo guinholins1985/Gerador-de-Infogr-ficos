@@ -35,7 +35,6 @@ const App: React.FC = () => {
       reader.onerror = () => {
         setError("Falha ao ler o arquivo de imagem.");
       }
-      // FIX: Property 'readDataURL' does not exist on type 'FileReader'. Corrected to 'readAsDataURL'.
       reader.readAsDataURL(file);
     }
   };
@@ -154,7 +153,7 @@ const App: React.FC = () => {
                 htmlFor="image-upload"
                 className="cursor-pointer w-full flex justify-center items-center px-6 py-3 border-2 border-dashed border-gray-600 text-base font-medium rounded-lg text-brand-text-secondary hover:border-brand-primary hover:text-brand-primary transition"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <svg xmlns="http://www.w.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 Adicionar Imagem (Máx 5MB)
               </label>
             </>
@@ -266,7 +265,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-background text-brand-text-primary p-4 sm:p-6 lg:p-8">
-      <main className="max-w-5xl mx-auto">
+      <main className="max-w-7xl mx-auto">
         <header className="text-center my-12">
            <div className="flex justify-center items-center gap-3 sm:gap-4">
             <Icon name="lampada" className="w-10 h-10 sm:w-12 sm:h-12 text-amber-400" />
@@ -312,7 +311,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-       <footer className="text-center py-8 mt-12 text-brand-text-secondary">
+       <footer className="text-center py-8 mt-12 border-t border-gray-800 text-brand-text-secondary">
           <p>&copy; {new Date().getFullYear()} Gerador de Infográficos com IA. Feito com Gemini & React.</p>
         </footer>
     </div>

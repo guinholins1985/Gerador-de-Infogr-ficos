@@ -47,9 +47,37 @@
   }
 }
 </script>
+<style>
+  body {
+    margin: 0;
+    background-color: #111827; /* brand-background */
+    color: #F9FAFB; /* brand-text-primary */
+    font-family: 'Inter', sans-serif;
+  }
+  #root:empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-size: 1.2rem;
+  }
+  #root:empty::after {
+    content: "Carregando a aplicação...";
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+</style>
 </head>
   <body class="bg-brand-background font-sans">
     <div id="root"></div>
+    <noscript>
+      <div style="display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; padding: 2rem;">
+        <h1>JavaScript é necessário para esta aplicação funcionar. Por favor, habilite o JavaScript em seu navegador.</h1>
+      </div>
+    </noscript>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
