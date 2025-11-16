@@ -23,7 +23,7 @@ const InfographicDisplay: React.FC<InfographicDisplayProps> = ({ data }) => {
           <img 
             src={data.imageUrl} 
             alt="Cabeçalho do Infográfico" 
-            className="max-h-96 w-auto rounded-2xl shadow-lg object-contain" 
+            className="w-full max-w-4xl mx-auto aspect-video object-contain rounded-2xl bg-black/20 shadow-lg" 
           />
         </div>
       )}

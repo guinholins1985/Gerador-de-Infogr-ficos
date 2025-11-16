@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef } from 'react';
 import { generateInfographicData } from './services/geminiService';
 import { InfographicData, InputMode, Benefit, IconName } from './types';
@@ -36,6 +35,7 @@ const App: React.FC = () => {
       reader.onerror = () => {
         setError("Falha ao ler o arquivo de imagem.");
       }
+      // FIX: Property 'readDataURL' does not exist on type 'FileReader'. Corrected to 'readAsDataURL'.
       reader.readAsDataURL(file);
     }
   };
@@ -64,7 +64,7 @@ const App: React.FC = () => {
       }
 
       const data = await generateInfographicData(topic, imagePayload);
-      setInfographicData({ ...data, imageUrl: image });
+      setInfographicData({ ...data, imageUrl: image ?? undefined });
     } catch (err: any) {
       setError(err.message || 'Ocorreu um erro desconhecido.');
     } finally {
@@ -107,7 +107,7 @@ const App: React.FC = () => {
         ...b,
         icon: iconOptions[i % iconOptions.length],
       })),
-      imageUrl: image
+      imageUrl: image ?? undefined
     };
     setInfographicData(data);
   };
@@ -123,6 +123,7 @@ const App: React.FC = () => {
     if (fileInputRef.current) {
         fileInputRef.current.value = "";
     }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const renderImageUpload = () => {
@@ -196,7 +197,7 @@ const App: React.FC = () => {
         <button
           onClick={handleGenerateFromAI}
           disabled={isLoading}
-          className="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:bg-indigo-400 disabled:cursor-not-allowed"
+          className="w-full flex justify-center items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-brand-primary hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:bg-indigo-400 disabled:cursor-not-allowed shadow-lg hover:shadow-indigo-500/50"
         >
           <Icon name="estrela" className="w-5 h-5 mr-2" />
           Gerar Infográfico com IA
@@ -224,12 +225,18 @@ const App: React.FC = () => {
             </div>
             <div className="space-y-4">
                 {manualBenefits.map((benefit, index) => (
-                <div key={index} className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg space-y-3 relative">
+                <div key={index} className="p-4 bg-gray-800/50 border border-gray-700 rounded-lg space-y-3 relative group">
                     <div className="flex justify-between items-center">
-                    <label className="text-md font-medium text-brand-text-primary">Benefício {index + 1}</label>
-                    {manualBenefits.length > 1 && (
-                      <button onClick={() => handleRemoveBenefit(index)} className="text-red-400 hover:text-red-300 transition text-2xl absolute -top-1 -right-2 leading-none">&times;</button>
-                    )}
+                      <label className="text-md font-medium text-brand-text-primary">Benefício {index + 1}</label>
+                      {manualBenefits.length > 1 && (
+                        <button 
+                          onClick={() => handleRemoveBenefit(index)} 
+                          className="text-gray-500 hover:text-red-400 transition absolute -top-2 -right-2 p-1 bg-gray-700/50 rounded-full opacity-0 group-hover:opacity-100"
+                          aria-label={`Remover Benefício ${index + 1}`}
+                        >
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      )}
                     </div>
                     <input
                     type="text"
@@ -259,18 +266,21 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-brand-background text-brand-text-primary p-4 sm:p-6 lg:p-8">
-      <main className="max-w-4xl mx-auto">
+      <main className="max-w-5xl mx-auto">
         <header className="text-center my-12">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
-            Gerador de Infográficos
-          </h1>
+           <div className="flex justify-center items-center gap-3 sm:gap-4">
+            <Icon name="lampada" className="w-10 h-10 sm:w-12 sm:h-12 text-amber-400" />
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500">
+              Gerador de Infográficos
+            </h1>
+          </div>
           <p className="mt-4 text-lg sm:text-xl text-brand-text-secondary max-w-2xl mx-auto">
             Crie um infográfico de benefícios impressionante a partir de um tópico ou preenchendo os dados manualmente.
           </p>
         </header>
 
         {!infographicData && (
-          <div className="bg-brand-surface p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700/50">
+          <div className="bg-brand-surface p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700/50 animate-fade-in">
             <div className="flex justify-center border-b border-gray-700 mb-6">
               <button onClick={() => setInputMode(InputMode.AI)} className={`px-4 py-2 text-lg font-semibold transition ${inputMode === InputMode.AI ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-secondary'}`}>
                 Gerar com IA
@@ -283,7 +293,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {error && <div className="mt-6 text-center text-red-400 bg-red-900/50 p-4 rounded-lg">{error}</div>}
+        {error && <div className="mt-6 text-center text-red-400 bg-red-900/50 p-4 rounded-lg animate-fade-in">{error}</div>}
 
         {isLoading && <Loader />}
         
